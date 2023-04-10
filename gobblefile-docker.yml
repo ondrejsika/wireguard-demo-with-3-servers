@@ -1,0 +1,35 @@
+meta:
+  schema_version: 3
+hosts:
+  all:
+    - ssh_target: root@wg1.sikademo.com
+      vars:
+        net: 192.168.101.0/24
+        TEXT: wg1.sikademo.com
+    - ssh_target: root@wg2.sikademo.com
+      vars:
+        net: 192.168.102.0/24
+        TEXT: wg2.sikademo.com
+    - ssh_target: root@wg3.sikademo.com
+      vars:
+        net: 192.168.103.0/24
+        TEXT: wg3.sikademo.com
+plays:
+  - name: Install Docker
+    hosts: [all]
+    tags: [config]
+    tasks:
+      - name:
+        command:
+          cmd: curl -fsSL https://ins.oxs.cz/docker.sh | sudo sh
+  - name: Run Docker Demo
+    hosts: [all]
+    tags: [config]
+    tasks:
+      - name:
+        command:
+          cmd: docker network create --subnet={{.Vars.net}} my-network
+      - name:
+        command:
+          cmd: docker run -e TEXT={{.Vars.TEXT}} -p 80:80 -e PORT=80 --net my-network -d --name test sikalabs/hello-world-server:v0.6.0
+

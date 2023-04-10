@@ -1,0 +1,68 @@
+meta:
+  schema_version: 3
+hosts:
+  wg:
+    - ssh_target: root@wg1.sikademo.com
+    - ssh_target: root@wg2.sikademo.com
+    - ssh_target: root@wg3.sikademo.com
+  wg1:
+    - ssh_target: root@wg1.sikademo.com
+  wg2:
+    - ssh_target: root@wg2.sikademo.com
+  wg3:
+    - ssh_target: root@wg3.sikademo.com
+plays:
+  - name: Install Utils
+    hosts: [wg]
+    tags: [install]
+    tasks:
+      - name: Install slu
+        command:
+          cmd: curl -s https://raw.githubusercontent.com/sikalabs/slu/master/install.sh | bash
+  - name: Install Wireguard
+    hosts: [wg]
+    tags: [install]
+    tasks:
+      - name: Apt Update
+        command:
+          cmd: apt update || true
+      - name: Install wireguard-tools
+        apt_install:
+          name: wireguard-tools
+      - name: Ensure /etc/wireguard exists
+        command:
+          cmd: mkdir -p /etc/wireguard
+  - name: Setup Wireguard wg1
+    hosts: [wg1]
+    tags: [config]
+    tasks:
+      - name: Copy config
+        cp:
+          local_src: server1.conf
+          remote_dst: /etc/wireguard/wg0.conf
+  - name: Setup Wireguard wg2
+    hosts: [wg2]
+    tags: [config]
+    tasks:
+      - name: Copy config
+        cp:
+          local_src: server2.conf
+          remote_dst: /etc/wireguard/wg0.conf
+  - name: Setup Wireguard wg3
+    hosts: [wg3]
+    tags: [config]
+    tasks:
+      - name: Copy config
+        cp:
+          local_src: server3.conf
+          remote_dst: /etc/wireguard/wg0.conf
+  - name: Start Wireguard
+    hosts: [wg]
+    tags: [config]
+    tasks:
+      - name: Enable Wireguard
+        command:
+          cmd: systemctl enable wg-quick@wg0
+      - name: Start / Restart Wireguard
+        command:
+          cmd: systemctl restart wg-quick@wg0
